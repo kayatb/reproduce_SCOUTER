@@ -81,8 +81,8 @@ class SlotAttention(nn.Module):
             for id, image in enumerate(slots_vis):
                 image = Image.fromarray(image, mode='L')
                 image.save(f'sloter/vis/slot_{id:d}.png')
-            print(self.loss_status*torch.sum(attn.clone(), dim=2, keepdim=False))
-            print(self.loss_status*torch.sum(updates.clone(), dim=2, keepdim=False))
+            # print(self.loss_status*torch.sum(attn.clone(), dim=2, keepdim=False))
+            # print(self.loss_status*torch.sum(updates.clone(), dim=2, keepdim=False))
 
         if self.slots_per_class > 1:
             new_updates = torch.zeros((updates.size(0), self.num_classes, updates.size(-1)))
