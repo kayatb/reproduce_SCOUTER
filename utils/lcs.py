@@ -5,13 +5,13 @@ Save the most dissimlar category of each category using the Wu-Palmer Similarity
 import argparse
 import json
 import os
+import math
 import nltk
 
 nltk.download('omw-1.4')
 nltk.download('wordnet')
 
 from nltk.corpus import wordnet
-import math
 
 def get_name(root):
     """ Get the names of the categories. """

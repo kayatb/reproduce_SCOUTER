@@ -10,12 +10,13 @@ import numpy as np
 import os, os.path
 import json
 
-from sloter.slot_model import SlotModel
-from train import get_args_parser
-from dataset.ConText import ConText, MakeListImage
+from scouter.sloter.slot_model import SlotModel
+from scouter.train import get_args_parser
+from scouter.dataset.ConText import ConText, MakeListImage
 
 from area_size import calc_area_size
 from precision import calc_precision
+from IAUC_DAUC import calc_iauc_and_dauc
 
 
 def eval():
@@ -56,6 +57,8 @@ def eval():
     model = SlotModel(args)
     checkpoint = torch.load(f"{args.output_dir}/" + model_name, map_location=args.device)
     model.load_state_dict(checkpoint["model"])
+    model.to(args.device)
+    model.eval()
 
     # Load the bounding boxes
     with open("resized_bboxes.json", 'r') as fp:
@@ -63,6 +66,8 @@ def eval():
 
     total_area_size = 0
     total_precision = 0
+    total_iauc = 0
+    total_dauc = 0
     num_points = 0
     # Process each image.
     for data in data_loader_val:
@@ -76,9 +81,25 @@ def eval():
         
         image = transform2(image)
 
+        # Obtain explanation for image.
+        image = image.to(device, dtype=torch.float32)
+        _ = model(torch.unsqueeze(image, dim=0))  # Explanation image is saved during forward pass.
+
+        # Determine for which image/explanation to evaluate.
+        if args.loss_status > 0: # For positive explanations, evaluate against ground truth
+            id = label
+        else:  # For negative explanations, evaluate against least similar class.
+            with open('lcs_label_id.json') as json_file:
+                lcs_dict = json.load(json_file)
+            label_str = str(label)
+            id = lcs_dict[label_str]
+
         # Calculate all metrics
-        total_area_size += calc_area_size(args, model, device, image, label)
-        total_precision += calc_precision(args, model, device, image, label, fname, bboxes)
+        total_area_size += calc_area_size(id)
+        total_precision += calc_precision(id, args.img_size, fname, bboxes)
+        auc_scores = calc_iauc_and_dauc(model, image, id, args.img_size)
+        total_iauc += auc_scores[0]
+        total_dauc += auc_scores[1]
 
         num_points += 1
 
@@ -87,6 +108,8 @@ def eval():
 
     print(f"Average area size is: {total_area_size / num_points}")
     print(f"Average precision is: {total_precision / num_points}")
+    print(f"Average IAUC is: {total_iauc / num_points}")
+    print(f"Average DAUC is: {total_dauc / num_points}")
 
 
 if __name__ == '__main__':

@@ -1,4 +1,5 @@
-scouter/
+scouter/data
+scouter/saved_model
 scouter.zip
 
 # Byte-compiled / optimized / DLL files
