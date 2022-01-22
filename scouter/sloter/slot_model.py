@@ -17,34 +17,35 @@ class Identical(nn.Module):
 
 def load_backbone(args):
     bone = create_model(
-        args.model,
-        pretrained=args.pre_trained,
-        num_classes=args.num_classes)
+        args.model, pretrained=args.pre_trained, num_classes=args.num_classes
+    )
     if args.dataset == "MNIST":
         bone.conv1 = nn.Conv2d(1, 64, 3, stride=2, padding=1, bias=False)
     if args.use_slot:
         if args.use_pre:
-            checkpoint = torch.load(f"saved_model/{args.dataset}_no_slot_checkpoint.pth")
+            checkpoint = torch.load(
+                f"saved_model/{args.dataset}_no_slot_checkpoint.pth"
+            )
             new_state_dict = OrderedDict()
             for k, v in checkpoint["model"].items():
-                name = k[9:] # remove `backbone.`
+                name = k[9:]  # remove `backbone.`
                 new_state_dict[name] = v
             bone.load_state_dict(new_state_dict)
             print("load pre dataset parameter over")
         if not args.grad:
-            if 'seresnet' in args.model:
+            if "seresnet" in args.model:
                 bone.avg_pool = Identical()
                 bone.last_linear = Identical()
-            elif 'res' in args.model:
+            elif "res" in args.model:
                 bone.global_pool = Identical()
                 bone.fc = Identical()
-            elif 'efficient' in args.model:
+            elif "efficient" in args.model:
                 bone.global_pool = Identical()
                 bone.classifier = Identical()
-            elif 'densenet' in args.model:
+            elif "densenet" in args.model:
                 bone.global_pool = Identical()
                 bone.classifier = Identical()
-            elif 'mobilenet' in args.model:
+            elif "mobilenet" in args.model:
                 bone.global_pool = Identical()
                 bone.conv_head = Identical()
                 bone.act2 = Identical()
@@ -58,19 +59,31 @@ class SlotModel(nn.Module):
         self.use_slot = args.use_slot
         self.backbone = load_backbone(args)
         if self.use_slot:
-            if 'densenet' in args.model:
+            if "densenet" in args.model:
                 self.feature_size = 8
             else:
                 self.feature_size = 9
 
             self.channel = args.channel
             self.slots_per_class = args.slots_per_class
-            self.conv1x1 = nn.Conv2d(self.channel, args.hidden_dim, kernel_size=(1, 1), stride=(1, 1))
+            self.conv1x1 = nn.Conv2d(
+                self.channel, args.hidden_dim, kernel_size=(1, 1), stride=(1, 1)
+            )
             if args.pre_trained:
                 self.dfs_freeze(self.backbone, args.freeze_layers)
-            self.slot = SlotAttention(args.num_classes, self.slots_per_class, args.hidden_dim, vis=args.vis,
-                                         vis_id=args.vis_id, loss_status=args.loss_status, power=args.power, to_k_layer=args.to_k_layer)
-            self.position_emb = build_position_encoding('sine', hidden_dim=args.hidden_dim)
+            self.slot = SlotAttention(
+                args.num_classes,
+                self.slots_per_class,
+                args.hidden_dim,
+                vis=args.vis,
+                vis_id=args.vis_id,
+                loss_status=args.loss_status,
+                power=args.power,
+                to_k_layer=args.to_k_layer,
+            )
+            self.position_emb = build_position_encoding(
+                "sine", hidden_dim=args.hidden_dim
+            )
             self.lambda_value = float(args.lambda_value)
         else:
             if args.pre_trained:
@@ -80,7 +93,9 @@ class SlotModel(nn.Module):
         if freeze_layer_num == 0:
             return
 
-        unfreeze_layers = ['layer4', 'layer3', 'layer2', 'layer1'][:4-freeze_layer_num]
+        unfreeze_layers = ["layer4", "layer3", "layer2", "layer1"][
+            : 4 - freeze_layer_num
+        ]
         for name, child in model.named_children():
             skip = False
             for freeze_layer in unfreeze_layers:
@@ -95,7 +110,7 @@ class SlotModel(nn.Module):
 
     def dfs_freeze_bnorm(self, model):
         for name, child in model.named_children():
-            if 'bn' not in name:
+            if "bn" not in name:
                 self.dfs_freeze_bnorm(child)
                 continue
             for param in child.parameters():
@@ -106,7 +121,9 @@ class SlotModel(nn.Module):
         # Use softmax on the output if softmax=True.
         x = self.backbone(x)
         if self.use_slot:
-            x = self.conv1x1(x.view(x.size(0), self.channel, self.feature_size, self.feature_size))
+            x = self.conv1x1(
+                x.view(x.size(0), self.channel, self.feature_size, self.feature_size)
+            )
             x = torch.relu(x)
             pe = self.position_emb(x)
             x_pe = x + pe

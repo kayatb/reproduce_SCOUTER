@@ -9,19 +9,20 @@ from PIL import Image
 
 
 # Dummy class to store arguments
-class Dummy():
+class Dummy:
     pass
 
 
 # Function that opens image from disk, normalizes it and converts to tensor
-read_tensor = transforms.Compose([
-    lambda x: Image.open(x),
-    transforms.Resize((224, 224)),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                          std=[0.229, 0.224, 0.225]),
-    lambda x: torch.unsqueeze(x, 0)
-])
+read_tensor = transforms.Compose(
+    [
+        lambda x: Image.open(x),
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        lambda x: torch.unsqueeze(x, 0),
+    ]
+)
 
 
 # Plots image from tensor
@@ -40,18 +41,19 @@ def tensor_imshow(inp, title=None, **kwargs):
 
 # Given label number returns class name
 def get_class_name(c):
-    labels = np.loadtxt('synset_words.txt', str, delimiter='\t')
-    return ' '.join(labels[c].split(',')[0].split()[1:])
+    labels = np.loadtxt("synset_words.txt", str, delimiter="\t")
+    return " ".join(labels[c].split(",")[0].split()[1:])
 
 
 # Image preprocessing function
-preprocess = transforms.Compose([
-                transforms.Resize((224, 224)),
-                transforms.ToTensor(),
-                # Normalization for ImageNet
-                transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                     std=[0.229, 0.224, 0.225]),
-            ])
+preprocess = transforms.Compose(
+    [
+        transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        # Normalization for ImageNet
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    ]
+)
 
 
 # Sampler for pytorch loader. Given range r loader will only

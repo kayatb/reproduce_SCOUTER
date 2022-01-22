@@ -2,6 +2,8 @@ scouter/data
 scouter/saved_model
 scouter.zip
 
+.vscode
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
