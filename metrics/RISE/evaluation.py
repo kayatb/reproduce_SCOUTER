@@ -139,7 +139,7 @@ class CausalMetric:
         top = np.argmax(predictions, -1)
         n_steps = (HW + self.step - 1) // self.step
         scores = np.empty((n_steps + 1, n_samples))
-        salient_order = np.flip(np.argsort(exp_batch.reshape(-1, HW), axis=1), axis=-1)
+        salient_order = np.argsort(-exp_batch.reshape(-1, HW), axis=1)
         r = np.arange(n_samples).reshape(n_samples, 1)
 
         substrate = torch.zeros_like(img_batch)

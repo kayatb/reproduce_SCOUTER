@@ -17,10 +17,12 @@ from scouter.dataset.ConText import ConText, MakeListImage
 
 from area_size import calc_area_size
 from precision import calc_precision
-from IAUC_DAUC import calc_iauc_and_dauc
+from IAUC_DAUC import calc_iauc_and_dauc_batch
+
+import utils.exp_data
 
 
-def prepare():
+def prepare(batch_size):
     """Prepare model, datasets etc. for evaluation."""
     # Parse command line arguments
     parser = argparse.ArgumentParser("model training and evaluation script", parents=[get_args_parser()])
@@ -63,8 +65,9 @@ def prepare():
     # Retrieve the data. We only need to evaluate the validation set.
     _, val = MakeListImage(args).get_data()
     dataset_val = ConText(val, transform=transform)
-    # Use batch size = 1 to handle a single image at a time.
-    data_loader_val = torch.utils.data.DataLoader(dataset_val, 1, shuffle=False, num_workers=1, pin_memory=True)
+    data_loader_val = torch.utils.data.DataLoader(
+        dataset_val, batch_size, shuffle=False, num_workers=1, pin_memory=True
+    )
 
     # Load the model from checkpoint.
     model = SlotModel(args)
@@ -120,8 +123,8 @@ def eval(model, data_loader_val, transform, device, loss_status, img_size, exp_d
 
     total_area_size = 0
     total_precision = 0
-    total_iauc = 0
-    total_dauc = 0
+    # total_iauc = 0
+    # total_dauc = 0
     num_points = 0
     # Process each image.
     for data in data_loader_val:
@@ -138,9 +141,9 @@ def eval(model, data_loader_val, transform, device, loss_status, img_size, exp_d
         # Calculate all metrics
         total_area_size += calc_area_size(exp_image)
         total_precision += calc_precision(exp_image, img_size, fname, bboxes)
-        auc_scores = calc_iauc_and_dauc(model, image, id, img_size)
-        total_iauc += auc_scores[0]
-        total_dauc += auc_scores[1]
+        # auc_scores = calc_iauc_and_dauc(model, image, id, img_size)
+        # total_iauc += auc_scores[0]
+        # total_dauc += auc_scores[1]
 
         num_points += 1
 
@@ -149,12 +152,31 @@ def eval(model, data_loader_val, transform, device, loss_status, img_size, exp_d
 
     print(f"Average area size is: {total_area_size / num_points}")
     print(f"Average precision is: {total_precision / num_points}")
-    print(f"Average IAUC is: {total_iauc / num_points}")
-    print(f"Average DAUC is: {total_dauc / num_points}")
+    # print(f"Average IAUC is: {total_iauc / num_points}")
+    # print(f"Average DAUC is: {total_dauc / num_points}")
 
 
 if __name__ == "__main__":
-    model, data_loader_val, transform, device, loss_status, img_size = prepare()
+    # Use batch size = 1 to handle a single image at a time.
+    model, data_loader_val, transform, device, loss_status, img_size = prepare(1)
     eval(model, data_loader_val, transform, device, loss_status, img_size)
 
+    batch_size = 70
+    model, data_loader_val, transform, device, loss_status, img_size = prepare(batch_size)
+    if loss_status > 0:
+        exp_files = utils.exp_data.get_exp_filenames("exps/positive")
+    else:
+        exp_files = utils.exp_data.get_exp_filenames("exps/negative")
+
+    exp_dataloader = torch.utils.data.DataLoader(
+        utils.exp_data.ExpData(exp_files, img_size, resize=True),
+        batch_size,
+        shuffle=False,
+        num_workers=1,
+        pin_memory=True,
+    )
+
+    iauc, dauc = calc_iauc_and_dauc_batch(model, data_loader_val, exp_dataloader, batch_size, img_size)
+    print(f"IAUC: {iauc}")
+    print(f"DAUC: {dauc}")
     # generate_explanations(model, data_loader_val, device)

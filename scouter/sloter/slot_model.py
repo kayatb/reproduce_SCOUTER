@@ -108,7 +108,6 @@ class SlotModel(nn.Module):
             self.dfs_freeze_bnorm(child)
 
     def forward(self, x, target=None, softmax=False, save_id=None):
-        # Use softmax on the output if softmax=True.
         x = self.backbone(x)
         if self.use_slot:
             x = self.conv1x1(x.view(x.size(0), self.channel, self.feature_size, self.feature_size))
@@ -120,6 +119,8 @@ class SlotModel(nn.Module):
             x = x.reshape((b, n, -1)).permute((0, 2, 1))
             x_pe = x_pe.reshape((b, n, -1)).permute((0, 2, 1))
             x, attn_loss = self.slot(x_pe, x, save_id)
+
+        # Use softmax on the output if softmax=True.
         if softmax:
             output = F.softmax(x, dim=1)
         else:
