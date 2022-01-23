@@ -17,9 +17,7 @@ def calc_iauc_and_dauc(model, image, id, img_size):
     for the given image."""
 
     slot_image = np.array(
-        Image.open(f"sloter/vis/slot_{id}.png").resize(
-            (img_size, img_size), resample=Image.BILINEAR
-        ),
+        Image.open(f"sloter/vis/slot_{id}.png").resize((img_size, img_size), resample=Image.BILINEAR),
         dtype=np.uint8,
     )
 

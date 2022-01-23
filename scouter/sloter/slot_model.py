@@ -16,16 +16,12 @@ class Identical(nn.Module):
 
 
 def load_backbone(args):
-    bone = create_model(
-        args.model, pretrained=args.pre_trained, num_classes=args.num_classes
-    )
+    bone = create_model(args.model, pretrained=args.pre_trained, num_classes=args.num_classes)
     if args.dataset == "MNIST":
         bone.conv1 = nn.Conv2d(1, 64, 3, stride=2, padding=1, bias=False)
     if args.use_slot:
         if args.use_pre:
-            checkpoint = torch.load(
-                f"saved_model/{args.dataset}_no_slot_checkpoint.pth"
-            )
+            checkpoint = torch.load(f"saved_model/{args.dataset}_no_slot_checkpoint.pth")
             new_state_dict = OrderedDict()
             for k, v in checkpoint["model"].items():
                 name = k[9:]  # remove `backbone.`
@@ -66,9 +62,7 @@ class SlotModel(nn.Module):
 
             self.channel = args.channel
             self.slots_per_class = args.slots_per_class
-            self.conv1x1 = nn.Conv2d(
-                self.channel, args.hidden_dim, kernel_size=(1, 1), stride=(1, 1)
-            )
+            self.conv1x1 = nn.Conv2d(self.channel, args.hidden_dim, kernel_size=(1, 1), stride=(1, 1))
             if args.pre_trained:
                 self.dfs_freeze(self.backbone, args.freeze_layers)
             self.slot = SlotAttention(
@@ -81,9 +75,7 @@ class SlotModel(nn.Module):
                 power=args.power,
                 to_k_layer=args.to_k_layer,
             )
-            self.position_emb = build_position_encoding(
-                "sine", hidden_dim=args.hidden_dim
-            )
+            self.position_emb = build_position_encoding("sine", hidden_dim=args.hidden_dim)
             self.lambda_value = float(args.lambda_value)
         else:
             if args.pre_trained:
@@ -93,9 +85,7 @@ class SlotModel(nn.Module):
         if freeze_layer_num == 0:
             return
 
-        unfreeze_layers = ["layer4", "layer3", "layer2", "layer1"][
-            : 4 - freeze_layer_num
-        ]
+        unfreeze_layers = ["layer4", "layer3", "layer2", "layer1"][: 4 - freeze_layer_num]
         for name, child in model.named_children():
             skip = False
             for freeze_layer in unfreeze_layers:
@@ -117,13 +107,11 @@ class SlotModel(nn.Module):
                 param.requires_grad = False
             self.dfs_freeze_bnorm(child)
 
-    def forward(self, x, target=None, softmax=False):
+    def forward(self, x, target=None, softmax=False, save_id=None):
         # Use softmax on the output if softmax=True.
         x = self.backbone(x)
         if self.use_slot:
-            x = self.conv1x1(
-                x.view(x.size(0), self.channel, self.feature_size, self.feature_size)
-            )
+            x = self.conv1x1(x.view(x.size(0), self.channel, self.feature_size, self.feature_size))
             x = torch.relu(x)
             pe = self.position_emb(x)
             x_pe = x + pe
@@ -131,7 +119,7 @@ class SlotModel(nn.Module):
             b, n, r, c = x.shape
             x = x.reshape((b, n, -1)).permute((0, 2, 1))
             x_pe = x_pe.reshape((b, n, -1)).permute((0, 2, 1))
-            x, attn_loss = self.slot(x_pe, x)
+            x, attn_loss = self.slot(x_pe, x, save_id)
         if softmax:
             output = F.softmax(x, dim=1)
         else:

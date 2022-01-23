@@ -20,7 +20,8 @@ from precision import calc_precision
 from IAUC_DAUC import calc_iauc_and_dauc
 
 
-def eval():
+def prepare():
+    """Prepare model, datasets etc. for evaluation."""
     # Parse command line arguments
     parser = argparse.ArgumentParser("model training and evaluation script", parents=[get_args_parser()])
     parser.add_argument(
@@ -72,9 +73,53 @@ def eval():
     model.to(args.device)
     model.eval()
 
+    return model, data_loader_val, transform, device, args.loss_status, args.img_size
+
+
+def prepare_data_point(data, transform, device):
+    """Prepare a singel datapoint (image, label, file name) to be used in evaluation or
+    explanation generation."""
+    image = data["image"][0]
+    label = data["label"][0].item()
+    fname = os.path.basename(data["names"][0])[:-5]  # Remove .JPEG extension.
+
+    image_orl = Image.fromarray(
+        (image.cpu().detach().numpy() * 255).astype(np.uint8).transpose((1, 2, 0)),
+        mode="RGB",
+    )
+
+    image = transform(image_orl)
+    transform2 = transforms.Compose([transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
+    image = transform2(image)
+    image = image.to(device, dtype=torch.float32)
+
+    return image, label, fname
+
+
+def generate_explanations(model, data_loader_val, device, save_path=None):
+    """Generate and saves the explanations of the model for the images in the validation set.
+    Only the ground truth explanation and the least similar class are generated/saved."""
+    with open("lcs_label_id.json") as json_file:
+        lcs_dict = json.load(json_file)
+
+    if not save_path:
+        os.makedirs("exps/positive", exist_ok=True)
+        os.makedirs("exps/negative", exist_ok=True)
+        save_path = "exps"
+
+    for data in data_loader_val:
+        image, label, fname = prepare_data_point(data, transform, device)
+        _ = model(torch.unsqueeze(image, dim=0), save_id=(label, lcs_dict[str(label)], save_path, fname))
+
+
+def eval(model, data_loader_val, transform, device, loss_status, img_size, exp_dir="exps"):
+    """Evaluate the model on several metrics using the validation set."""
     # Load the bounding boxes
     with open("resized_bboxes.json", "r") as fp:
         bboxes = json.load(fp)
+
+    with open("lcs_label_id.json") as json_file:
+        lcs_dict = json.load(json_file)
 
     total_area_size = 0
     total_precision = 0
@@ -83,36 +128,21 @@ def eval():
     num_points = 0
     # Process each image.
     for data in data_loader_val:
-        image = data["image"][0]
-        label = data["label"][0].item()
-        fname = os.path.basename(data["names"][0])[:-5]  # Remove .JPEG extension.
+        image, label, fname = prepare_data_point(data, transform, device)
 
-        image_orl = Image.fromarray(
-            (image.cpu().detach().numpy() * 255).astype(np.uint8).transpose((1, 2, 0)),
-            mode="RGB",
-        )
-        image = transform(image_orl)
-        transform2 = transforms.Compose([transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])])
-
-        image = transform2(image)
-
-        # Obtain explanation for image.
-        image = image.to(device, dtype=torch.float32)
-        _ = model(torch.unsqueeze(image, dim=0))  # Explanation image is saved during forward pass.
+        # TODO: change calc_area_size and calc_precision to account for pre-saved explanations.
+        # _ = model(torch.unsqueeze(image, dim=0))  # Explanation image is saved during forward pass.
 
         # Determine for which image/explanation to evaluate.
-        if args.loss_status > 0:  # For positive explanations, evaluate against ground truth
+        if loss_status > 0:  # For positive explanations, evaluate against ground truth
             id = label
         else:  # For negative explanations, evaluate against least similar class.
-            with open("lcs_label_id.json") as json_file:
-                lcs_dict = json.load(json_file)
-            label_str = str(label)
-            id = lcs_dict[label_str]
+            id = lcs_dict[str(label)]
 
         # Calculate all metrics
         total_area_size += calc_area_size(id)
-        total_precision += calc_precision(id, args.img_size, fname, bboxes)
-        auc_scores = calc_iauc_and_dauc(model, image, id, args.img_size)
+        total_precision += calc_precision(id, img_size, fname, bboxes)
+        auc_scores = calc_iauc_and_dauc(model, image, id, img_size)
         total_iauc += auc_scores[0]
         total_dauc += auc_scores[1]
 
@@ -128,4 +158,6 @@ def eval():
 
 
 if __name__ == "__main__":
-    eval()
+    model, data_loader_val, transform, device, loss_status, img_size = prepare()
+    # eval(model, data_loader_val, transform, device, loss_status, img_size)
+    generate_explanations(model, data_loader_val, device)

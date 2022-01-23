@@ -81,9 +81,7 @@ class CausalMetric:
 
         scores = np.empty(n_steps + 1)
         # Coordinates of pixels in order of decreasing saliency
-        salient_order = np.flip(
-            np.argsort(explanation.reshape(-1, HW), axis=1), axis=-1
-        )
+        salient_order = np.flip(np.argsort(explanation.reshape(-1, HW), axis=1), axis=-1)
         for i in range(n_steps + 1):
             pred = self.model(start.cuda(), softmax=True)
             pr, cl = torch.topk(pred, 2)
@@ -95,9 +93,7 @@ class CausalMetric:
             if verbose == 2 or (verbose == 1 and i == n_steps) or save_to:
                 plt.figure(figsize=(10, 5))
                 plt.subplot(121)
-                plt.title(
-                    "{} {:.1f}%, P={:.4f}".format(ylabel, 100 * i / n_steps, scores[i])
-                )
+                plt.title("{} {:.1f}%, P={:.4f}".format(ylabel, 100 * i / n_steps, scores[i]))
                 plt.axis("off")
                 tensor_imshow(start[0])
 
@@ -105,9 +101,7 @@ class CausalMetric:
                 plt.plot(np.arange(i + 1) / n_steps, scores[: i + 1])
                 plt.xlim(-0.1, 1.1)
                 plt.ylim(0, 1.05)
-                plt.fill_between(
-                    np.arange(i + 1) / n_steps, 0, scores[: i + 1], alpha=0.4
-                )
+                plt.fill_between(np.arange(i + 1) / n_steps, 0, scores[: i + 1], alpha=0.4)
                 plt.title(title)
                 plt.xlabel(ylabel)
                 plt.ylabel(get_class_name(c))
@@ -118,12 +112,8 @@ class CausalMetric:
                     plt.show()
             if i < n_steps:
                 coords = salient_order[:, self.step * i : self.step * (i + 1)]
-                row_indices, col_indices = np.unravel_index(
-                    coords, (start.shape[2], start.shape[3])
-                )
-                start[0, :, row_indices, col_indices] = finish[
-                    0, :, row_indices, col_indices
-                ]
+                row_indices, col_indices = np.unravel_index(coords, (start.shape[2], start.shape[3]))
+                start[0, :, row_indices, col_indices] = finish[0, :, row_indices, col_indices]
                 # start.cpu().numpy().reshape(1, 3, HW)[0, :, coords] = finish.cpu().numpy().reshape(1, 3, HW)[0, :, coords]
 
         return scores
@@ -139,12 +129,13 @@ class CausalMetric:
         """
         n_samples = img_batch.shape[0]
         predictions = torch.FloatTensor(n_samples, n_classes)
+
         assert n_samples % batch_size == 0
+
         for i in tqdm(range(n_samples // batch_size), desc="Predicting labels"):
-            preds = self.model(
-                img_batch[i * batch_size : (i + 1) * batch_size].cuda()
-            ).cpu()
+            preds = self.model(img_batch[i * batch_size : (i + 1) * batch_size].cuda(), softmax=True).cpu()
             predictions[i * batch_size : (i + 1) * batch_size] = preds
+
         top = np.argmax(predictions, -1)
         n_steps = (HW + self.step - 1) // self.step
         scores = np.empty((n_steps + 1, n_samples))
@@ -171,15 +162,17 @@ class CausalMetric:
             # Iterate over batches
             for j in range(n_samples // batch_size):
                 # Compute new scores
-                preds = self.model(start[j * batch_size : (j + 1) * batch_size].cuda())
-                preds = preds.cpu().numpy()[
-                    range(batch_size), top[j * batch_size : (j + 1) * batch_size]
-                ]
+                preds = self.model(start[j * batch_size : (j + 1) * batch_size].cuda(), softmax=True)
+                preds = preds.cpu().numpy()[range(batch_size), top[j * batch_size : (j + 1) * batch_size]]
                 scores[i, j * batch_size : (j + 1) * batch_size] = preds
+
             # Change specified number of most salient pixels to substrate pixels
             coords = salient_order[:, self.step * i : self.step * (i + 1)]
-            start.cpu().numpy().reshape(n_samples, 3, HW)[r, :, coords] = (
-                finish.cpu().numpy().reshape(n_samples, 3, HW)[r, :, coords]
-            )
+            row_indices, col_indices = np.unravel_index(coords, exp_batch.shape[1:])
+            start[r, :, row_indices, col_indices] = finish[r, :, row_indices, col_indices]
+            # start.cpu().numpy().reshape(n_samples, 3, HW)[r, :, coords] = (
+            #     finish.cpu().numpy().reshape(n_samples, 3, HW)[r, :, coords]
+            # )
+
         print("AUC: {}".format(auc(scores.mean(1))))
         return scores
