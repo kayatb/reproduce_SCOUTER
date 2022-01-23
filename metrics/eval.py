@@ -118,9 +118,6 @@ def eval(model, data_loader_val, transform, device, loss_status, img_size, exp_d
     with open("resized_bboxes.json", "r") as fp:
         bboxes = json.load(fp)
 
-    with open("lcs_label_id.json") as json_file:
-        lcs_dict = json.load(json_file)
-
     total_area_size = 0
     total_precision = 0
     total_iauc = 0
@@ -130,18 +127,17 @@ def eval(model, data_loader_val, transform, device, loss_status, img_size, exp_d
     for data in data_loader_val:
         image, label, fname = prepare_data_point(data, transform, device)
 
-        # TODO: change calc_area_size and calc_precision to account for pre-saved explanations.
-        # _ = model(torch.unsqueeze(image, dim=0))  # Explanation image is saved during forward pass.
-
         # Determine for which image/explanation to evaluate.
-        if loss_status > 0:  # For positive explanations, evaluate against ground truth
-            id = label
-        else:  # For negative explanations, evaluate against least similar class.
-            id = lcs_dict[str(label)]
+        if loss_status > 0:  # Positive explanations
+            dir = "positive"
+        else:  # Negative explanations
+            dir = "negative"
+
+        exp_image = Image.open(os.path.join(exp_dir, dir, fname + ".png"))
 
         # Calculate all metrics
-        total_area_size += calc_area_size(id)
-        total_precision += calc_precision(id, img_size, fname, bboxes)
+        total_area_size += calc_area_size(exp_image)
+        total_precision += calc_precision(exp_image, img_size, fname, bboxes)
         auc_scores = calc_iauc_and_dauc(model, image, id, img_size)
         total_iauc += auc_scores[0]
         total_dauc += auc_scores[1]
@@ -159,5 +155,6 @@ def eval(model, data_loader_val, transform, device, loss_status, img_size, exp_d
 
 if __name__ == "__main__":
     model, data_loader_val, transform, device, loss_status, img_size = prepare()
-    # eval(model, data_loader_val, transform, device, loss_status, img_size)
-    generate_explanations(model, data_loader_val, device)
+    eval(model, data_loader_val, transform, device, loss_status, img_size)
+
+    # generate_explanations(model, data_loader_val, device)

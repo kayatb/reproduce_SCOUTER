@@ -4,11 +4,11 @@ from PIL import Image
 import numpy as np
 
 
-def calc_precision(id, img_size, fname, bboxes):
+def calc_precision(exp_image, img_size, fname, bboxes):
     """Calculate the precision for the explanation of the given image."""
     # Resize the attention map to be the same size as the image via bilinear interpolation.
     slot_image = np.array(
-        Image.open(f"sloter/vis/slot_{id}.png").resize((img_size, img_size), resample=Image.BILINEAR),
+        exp_image.resize((img_size, img_size), resample=Image.BILINEAR),
         dtype=np.uint8,
     )
     attention_sum = slot_image.sum()  # sum of complete attention map
