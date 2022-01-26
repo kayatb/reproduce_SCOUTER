@@ -2,12 +2,13 @@ from dataset.mnist import MNIST
 from dataset.CUB200 import CUB_200
 from dataset.ConText import ConText, MakeList, MakeListImage
 from dataset.transform_func import make_transform
+from dataset.ACRIMA import get_data, ACRIMA, get_mean_and_std
 
 
 def select_dataset(args):
     if args.dataset == "MNIST":
-        dataset_train = MNIST('./data/mnist', train=True, download=True, transform=make_transform(args, "train"))
-        dataset_val = MNIST('./data/mnist', train=False, transform=make_transform(args, "val"))
+        dataset_train = MNIST("./data/mnist", train=True, download=True, transform=make_transform(args, "train"))
+        dataset_val = MNIST("./data/mnist", train=False, transform=make_transform(args, "val"))
         return dataset_train, dataset_val
     if args.dataset == "CUB200":
         dataset_train = CUB_200(args, train=True, transform=make_transform(args, "train"))
@@ -23,6 +24,15 @@ def select_dataset(args):
         dataset_train = ConText(train, transform=make_transform(args, "train"))
         dataset_val = ConText(val, transform=make_transform(args, "val"))
         return dataset_train, dataset_val
+    if args.dataset == "ACRIMA":
+        train, val = get_data(args.dataset_dir)
+        dataset_train = ACRIMA(train, transform=make_transform(args, "train"))
 
-    raise ValueError(f'unknown {args.dataset}')
+        mean, std = get_mean_and_std(dataset_train)
+        print("mean:", mean)
+        print("std:", std)
 
+        dataset_val = ACRIMA(val, transform=make_transform(args, "val"))
+        return dataset_train, dataset_val
+
+    raise ValueError(f"unknown {args.dataset}")
