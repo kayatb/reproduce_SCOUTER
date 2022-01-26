@@ -176,7 +176,7 @@ if __name__ == "__main__":
         pin_memory=True,
     )
 
-    iauc, dauc = calc_iauc_and_dauc_batch(model, data_loader_val, exp_dataloader, batch_size, img_size)
+    iauc, dauc = calc_iauc_and_dauc_batch(model, data_loader_val, exp_dataloader, img_size)
     print(f"IAUC: {iauc}")
     print(f"DAUC: {dauc}")
     # generate_explanations(model, data_loader_val, device)

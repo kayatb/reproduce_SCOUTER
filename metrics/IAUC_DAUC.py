@@ -33,7 +33,7 @@ def calc_iauc_and_dauc(model, image, id, img_size):
     return RISE.evaluation.auc(ins_score), RISE.evaluation.auc(del_score)
 
 
-def calc_iauc_and_dauc_batch(model, img_dataloader, exp_dataloader, batch_size, img_size):
+def calc_iauc_and_dauc_batch(model, img_dataloader, exp_dataloader, img_size):
     """Calculate the IAUC and DAUC over batches in the dataloader."""
     model.eval()
     kern = RISE.evaluation.gkern(11, 5).cuda()
@@ -62,10 +62,10 @@ def calc_iauc_and_dauc_batch(model, img_dataloader, exp_dataloader, batch_size, 
             imgs = data["image"]
             exps = next(exp_iter)
 
-            ins = insertion.evaluate(imgs, exps, batch_size)
+            ins = insertion.evaluate(imgs, exps, len(imgs))
             ins_score.append(RISE.evaluation.auc(ins.mean(1)))
 
-            dels = deletion.evaluate(imgs, exps, batch_size)
+            dels = deletion.evaluate(imgs, exps, len(imgs))
             del_score.append(RISE.evaluation.auc(dels.mean(1)))
 
     return np.mean(ins_score), np.mean(del_score)
