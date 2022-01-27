@@ -107,7 +107,8 @@ class SlotModel(nn.Module):
                 param.requires_grad = False
             self.dfs_freeze_bnorm(child)
 
-    def forward(self, x, target=None, softmax=False, save_id=None):
+    def forward(self, x, target=None, softmax=False, save_id=None, sens=None):
+        # The sens parameter indicates whether the model is used to calculate the sensitivity metric.
         x = self.backbone(x)
         if self.use_slot:
             x = self.conv1x1(x.view(x.size(0), self.channel, self.feature_size, self.feature_size))
@@ -118,7 +119,7 @@ class SlotModel(nn.Module):
             b, n, r, c = x.shape
             x = x.reshape((b, n, -1)).permute((0, 2, 1))
             x_pe = x_pe.reshape((b, n, -1)).permute((0, 2, 1))
-            x, attn_loss = self.slot(x_pe, x, save_id)
+            x, attn_loss = self.slot(x_pe, x, save_id, sens)
 
         # Use softmax on the output if softmax=True.
         if softmax:

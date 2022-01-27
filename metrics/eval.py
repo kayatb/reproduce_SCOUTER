@@ -18,6 +18,7 @@ from scouter.dataset.ConText import ConText, MakeListImage
 from area_size import calc_area_size
 from precision import calc_precision
 from IAUC_DAUC import calc_iauc_and_dauc_batch
+from saliency_evaluation.eval_infid_sen import calc_infid_and_sens
 
 import utils.exp_data
 
@@ -159,24 +160,29 @@ def eval(model, data_loader_val, transform, device, loss_status, img_size, exp_d
 if __name__ == "__main__":
     # Use batch size = 1 to handle a single image at a time.
     model, data_loader_val, transform, device, loss_status, img_size = prepare(1)
-    eval(model, data_loader_val, transform, device, loss_status, img_size)
+    # TODO: implement for negative scouter with LCS
+    infid, sens = calc_infid_and_sens(model, data_loader_val, "exps/positive")
+    print("INFIDELITY:", infid)
+    print("SENSITIVITY:", sens)
+    # eval(model, data_loader_val, transform, device, loss_status, img_size)
 
-    batch_size = 70
-    model, data_loader_val, transform, device, loss_status, img_size = prepare(batch_size)
-    if loss_status > 0:
-        exp_files = utils.exp_data.get_exp_filenames("exps/positive")
-    else:
-        exp_files = utils.exp_data.get_exp_filenames("exps/negative")
+    # batch_size = 70
+    # model, data_loader_val, transform, device, loss_status, img_size = prepare(batch_size)
+    # if loss_status > 0:
+    #     exp_files = utils.exp_data.get_exp_filenames("exps/positive")
+    # else:
+    #     exp_files = utils.exp_data.get_exp_filenames("exps/negative")
 
-    exp_dataloader = torch.utils.data.DataLoader(
-        utils.exp_data.ExpData(exp_files, img_size, resize=True),
-        batch_size,
-        shuffle=False,
-        num_workers=1,
-        pin_memory=True,
-    )
+    # exp_dataloader = torch.utils.data.DataLoader(
+    #     utils.exp_data.ExpData(exp_files, img_size, resize=True),
+    #     batch_size,
+    #     shuffle=False,
+    #     num_workers=1,
+    #     pin_memory=True,
+    # )
 
-    iauc, dauc = calc_iauc_and_dauc_batch(model, data_loader_val, exp_dataloader, img_size)
-    print(f"IAUC: {iauc}")
-    print(f"DAUC: {dauc}")
+    # iauc, dauc = calc_iauc_and_dauc_batch(model, data_loader_val, exp_dataloader, img_size)
+    # print(f"IAUC: {iauc}")
+    # print(f"DAUC: {dauc}")
+
     # generate_explanations(model, data_loader_val, device)
