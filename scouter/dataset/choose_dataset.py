@@ -27,11 +27,6 @@ def select_dataset(args):
     if args.dataset == "ACRIMA":
         train, val = get_data(args.dataset_dir)
         dataset_train = ACRIMA(train, transform=make_transform(args, "train"))
-
-        mean, std = get_mean_and_std(dataset_train)
-        print("mean:", mean)
-        print("std:", std)
-
         dataset_val = ACRIMA(val, transform=make_transform(args, "val"))
         return dataset_train, dataset_val
 

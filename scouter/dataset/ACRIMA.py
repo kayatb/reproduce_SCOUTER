@@ -11,7 +11,7 @@ def get_data(datadir, train_ratio=0.8):
     """Put the path to each image in the directory together with its label in a list."""
     data = []
 
-    for file in os.listdir(datadir):
+    for file in sorted(os.listdir(datadir)):  # Make sure files are always processed in same order.
         path = os.path.join(datadir, file)
 
         if os.path.isdir(path):
@@ -26,7 +26,7 @@ def get_data(datadir, train_ratio=0.8):
 
         data.append((path, label))
 
-    train, val = train_test_split(data, train_size=train_ratio)
+    train, val = train_test_split(data, train_size=train_ratio, random_state=29)  # Use same split across runs.
 
     return train, val
 
