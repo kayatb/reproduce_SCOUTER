@@ -50,7 +50,7 @@ class SlotAttention(nn.Module):
         self.vis_id = vis_id
         self.power = power
 
-    def forward(self, inputs, inputs_x, save_id=None, sens=None):
+    def forward(self, inputs, inputs_x, save_id=None, sens=-1):
         b, n, d = inputs.shape
         slots = self.initial_slots.expand(b, -1, -1)
         k, v = self.to_k(inputs), inputs
@@ -75,10 +75,10 @@ class SlotAttention(nn.Module):
 
             slots = slots.reshape(b, -1, d)
 
-            if self.vis:
+            if self.vis or sens > -1:
                 slots_vis = attn.clone()
 
-        if self.vis or sens:  # Only save explanations if in visualisation mode or calculating sensitivity.
+        if self.vis or sens > -1:  # Only save explanations if in visualisation mode or calculating sensitivity.
             if self.slots_per_class > 1:
                 new_slots_vis = torch.zeros((slots_vis.size(0), self.num_classes, slots_vis.size(-1)))
                 for slot_class in range(self.num_classes):

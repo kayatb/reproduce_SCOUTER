@@ -274,7 +274,7 @@ def get_imageset(image_copy, im_size, rads=[2, 3, 4, 5, 6]):
 def get_exp_infid(image, model, exp, label, pdt, binary_I, pert):
     point = 260 * 260
     total = np.prod(exp.shape)
-    num = 10000
+    num = 100
     if pert == "Square":
         im_size = image.shape
         width = im_size[2]
@@ -310,7 +310,7 @@ def get_exp_infid(image, model, exp, label, pdt, binary_I, pert):
     out = forward_batch(model, image_v, FORWARD_BZ)
     pdt_rm = out[:, label]
     pdt_diff = np.squeeze(pdt - pdt_rm)
-    exp_sum = np.sum(exp_sum, axis=1)
+    exp_sum = np.mean(exp_sum, axis=1)
 
     # performs optimal scaling for each explanation before calculating the infidelity score
     beta = np.mean(ks * pdt_diff * exp_sum) / np.mean(ks * exp_sum * exp_sum)
@@ -325,8 +325,8 @@ def get_exp_sens(X, model, expl, yy, sg_r, sg_N, sen_r, sen_N, norm, binary_I, g
         sample = torch.FloatTensor(sample_eps_Inf(X.cpu().numpy(), sen_r, 1)).cuda()
         X_noisy = X + sample
         # expl_eps, _ = get_explanation_pdt(X_noisy, model, yy, exp, sg_r, sg_N, given_expl=given_expl, binary_I=binary_I)
-        _ = model(X_noisy, sens=yy)
-        expl_eps = np.array(Image.open("noisy.png"), dtype=np.uint8)
+        _ = model(X_noisy, sens=yy.item())
+        expl_eps = np.array(Image.open("noisy.png").resize((260, 260), resample=Image.BILINEAR), dtype=np.uint8)
 
         max_diff = max(max_diff, np.linalg.norm(expl - expl_eps)) / norm
     return max_diff
@@ -365,11 +365,12 @@ def evaluate_infid_sen(loader, model, exp_path, pert, sen_r, sen_N, sg_r=None, s
         )
         norm = np.linalg.norm(expl)
 
-        infid = get_exp_infid(X, model, expl, y[0], pdt, binary_I=binary_I, pert=pert)
-        infids.append(infid)
-        # TODO: if negative scouter, give LCS instead of ground truth
-        sens = get_exp_sens(X, model, expl, y[0], sg_r, sg_N, sen_r, sen_N, norm, binary_I, given_expl)
+        with torch.no_grad():
+            infid = get_exp_infid(X, model, expl, y[0], pdt, binary_I=binary_I, pert=pert)
+            # TODO: if negative scouter, give LCS instead of ground truth
+            sens = get_exp_sens(X, model, expl, y[0], sg_r, sg_N, sen_r, sen_N, norm, binary_I, given_expl)
 
+        infids.append(infid)
         max_sens.append(sens)
 
     infid = np.mean(infids)

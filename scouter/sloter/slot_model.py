@@ -107,7 +107,7 @@ class SlotModel(nn.Module):
                 param.requires_grad = False
             self.dfs_freeze_bnorm(child)
 
-    def forward(self, x, target=None, softmax=False, save_id=None, sens=None):
+    def forward(self, x, target=None, softmax=False, save_id=None, sens=-1):
         # The sens parameter indicates whether the model is used to calculate the sensitivity metric.
         x = self.backbone(x)
         if self.use_slot:
