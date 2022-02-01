@@ -75,10 +75,11 @@ class SlotAttention(nn.Module):
 
             slots = slots.reshape(b, -1, d)
 
-            if self.vis or sens > -1:
+            if self.vis or save_id or sens > -1:
                 slots_vis = attn.clone()
 
-        if self.vis or sens > -1:  # Only save explanations if in visualisation mode or calculating sensitivity.
+        # Only save explanations if in visualisation mode or calculating sensitivity.
+        if self.vis or save_id or sens > -1:
             if self.slots_per_class > 1:
                 new_slots_vis = torch.zeros((slots_vis.size(0), self.num_classes, slots_vis.size(-1)))
                 for slot_class in range(self.num_classes):
@@ -100,7 +101,7 @@ class SlotAttention(nn.Module):
             for id, image in enumerate(slots_vis):
                 image = Image.fromarray(image, mode="L")
                 # image.save(f"sloter/vis/slot_{id:d}.png")
-                if self.vis:
+                if self.vis or save_id:
                     if id == save_id[0]:  # Ground truth.
                         image.save(os.path.join(save_id[2], "positive", f"{save_id[3]}.png"))
                     elif id == save_id[1]:  # Least similar class.

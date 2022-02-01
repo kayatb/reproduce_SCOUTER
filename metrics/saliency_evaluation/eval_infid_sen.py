@@ -37,7 +37,7 @@ class OutputLog(object):
         return log
 
 
-def calc_infid_and_sens(model, dataloader, exp_path):
+def calc_infid_and_sens(model, dataloader, exp_path, loss_status, lcs_dict):
     """Calculate the infidelity and sensitivity scores."""
     args = Args(config.args)
 
@@ -50,7 +50,9 @@ def calc_infid_and_sens(model, dataloader, exp_path):
     infid_scores = {}
     max_sen_scores = {}
     for pert in args.perts:
-        infid, max_sen = evaluate_infid_sen(dataloader, model, exp_path, pert, args.sen_r, args.sen_N)
+        infid, max_sen = evaluate_infid_sen(
+            dataloader, model, exp_path, loss_status, lcs_dict, pert, args.sen_r, args.sen_N
+        )
         infid_scores[pert] = infid
         max_sen_scores[pert] = max_sen
 

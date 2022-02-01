@@ -81,7 +81,7 @@ def prepare(batch_size):
 
 
 def prepare_data_point(data, transform, device):
-    """Prepare a singel datapoint (image, label, file name) to be used in evaluation or
+    """Prepare a single datapoint (image, label, file name) to be used in evaluation or
     explanation generation."""
     image = data["image"][0]
     label = data["label"][0].item()
@@ -116,7 +116,7 @@ def generate_explanations(model, data_loader_val, device, save_path=None):
         _ = model(torch.unsqueeze(image, dim=0), save_id=(label, lcs_dict[str(label)], save_path, fname))
 
 
-def eval(model, data_loader_val, transform, device, loss_status, img_size, exp_dir="exps"):
+def eval(data_loader_val, transform, device, loss_status, img_size, exp_dir="exps"):
     """Evaluate the model on several metrics using the validation set."""
     # Load the bounding boxes
     with open("resized_bboxes.json", "r") as fp:
@@ -124,8 +124,7 @@ def eval(model, data_loader_val, transform, device, loss_status, img_size, exp_d
 
     total_area_size = 0
     total_precision = 0
-    # total_iauc = 0
-    # total_dauc = 0
+
     num_points = 0
     # Process each image.
     for data in data_loader_val:
@@ -142,9 +141,6 @@ def eval(model, data_loader_val, transform, device, loss_status, img_size, exp_d
         # Calculate all metrics
         total_area_size += calc_area_size(exp_image)
         total_precision += calc_precision(exp_image, img_size, fname, bboxes)
-        # auc_scores = calc_iauc_and_dauc(model, image, id, img_size)
-        # total_iauc += auc_scores[0]
-        # total_dauc += auc_scores[1]
 
         num_points += 1
 
@@ -153,18 +149,27 @@ def eval(model, data_loader_val, transform, device, loss_status, img_size, exp_d
 
     print(f"Average area size is: {total_area_size / num_points}")
     print(f"Average precision is: {total_precision / num_points}")
-    # print(f"Average IAUC is: {total_iauc / num_points}")
-    # print(f"Average DAUC is: {total_dauc / num_points}")
 
 
 if __name__ == "__main__":
     # Use batch size = 1 to handle a single image at a time.
     model, data_loader_val, transform, device, loss_status, img_size = prepare(1)
-    # TODO: implement for negative scouter with LCS
-    infid, sens = calc_infid_and_sens(model, data_loader_val, "exps/positive")
+
+    # Generate all explanation images.
+    generate_explanations(model, data_loader_val, device)
+
+    if loss_status > 0:
+        exp_path = "exps/positive"
+    else:
+        exp_path = "exps/negative"
+
+    with open("lcs_label_id.json") as json_file:
+        lcs_dict = json.load(json_file)
+
+    infid, sens = calc_infid_and_sens(model, data_loader_val, exp_path, loss_status, lcs_dict)
     print("INFIDELITY:", infid)
     print("SENSITIVITY:", sens)
-    # eval(model, data_loader_val, transform, device, loss_status, img_size)
+    # eval(data_loader_val, transform, device, loss_status, img_size)
 
     # batch_size = 70
     # model, data_loader_val, transform, device, loss_status, img_size = prepare(batch_size)
@@ -184,5 +189,3 @@ if __name__ == "__main__":
     # iauc, dauc = calc_iauc_and_dauc_batch(model, data_loader_val, exp_dataloader, img_size)
     # print(f"IAUC: {iauc}")
     # print(f"DAUC: {dauc}")
-
-    # generate_explanations(model, data_loader_val, device)

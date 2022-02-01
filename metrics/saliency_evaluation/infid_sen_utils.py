@@ -319,7 +319,7 @@ def get_exp_infid(image, model, exp, label, pdt, binary_I, pert):
     return infid
 
 
-def get_exp_sens(X, model, expl, yy, sg_r, sg_N, sen_r, sen_N, norm, binary_I, given_expl):
+def get_exp_sens(X, model, expl, yy, sen_r, sen_N, norm):
     max_diff = -math.inf
     for _ in range(sen_N):
         sample = torch.FloatTensor(sample_eps_Inf(X.cpu().numpy(), sen_r, 1)).cuda()
@@ -332,7 +332,7 @@ def get_exp_sens(X, model, expl, yy, sg_r, sg_N, sen_r, sen_N, norm, binary_I, g
     return max_diff
 
 
-def evaluate_infid_sen(loader, model, exp_path, pert, sen_r, sen_N, sg_r=None, sg_N=None, given_expl=None):
+def evaluate_infid_sen(loader, model, exp_path, loss_status, lcs_dict, pert, sen_r, sen_N):
     if pert == "Square":
         binary_I = True
     elif pert == "Gaussian":
@@ -351,10 +351,12 @@ def evaluate_infid_sen(loader, model, exp_path, pert, sen_r, sen_N, sg_r=None, s
         X = batch["image"].cuda()
         y = batch["label"].cuda()
 
+        if loss_status < 0:
+            y[0] = lcs_dict[str(y[0].item())]
+
         if y.dim() == 2:
             y = y.squeeze(1)
 
-        # expl, pdt = get_explanation_pdt(X, model, y[0], exp, sg_r, sg_N, given_expl=given_expl, binary_I=binary_I)
         pdt = model(X)[:, y]
         pdt = pdt.data.cpu().numpy()
 
@@ -367,8 +369,7 @@ def evaluate_infid_sen(loader, model, exp_path, pert, sen_r, sen_N, sg_r=None, s
 
         with torch.no_grad():
             infid = get_exp_infid(X, model, expl, y[0], pdt, binary_I=binary_I, pert=pert)
-            # TODO: if negative scouter, give LCS instead of ground truth
-            sens = get_exp_sens(X, model, expl, y[0], sg_r, sg_N, sen_r, sen_N, norm, binary_I, given_expl)
+            sens = get_exp_sens(X, model, expl, y[0], sen_r, sen_N, norm)
 
         infids.append(infid)
         max_sens.append(sens)
