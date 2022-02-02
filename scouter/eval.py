@@ -64,9 +64,6 @@ def prepare(batch_size):
     for arg_id, arg in enumerate(args_for_evaluation):
         args_dict[arg] = args_type[arg_id](args_dict[arg])
 
-    # Directory to save images during model forward pass.
-    os.makedirs("sloter/vis", exist_ok=True)
-
     model_name = (
         f"{args.dataset}_"
         + f"{'use_slot_' if args.use_slot else 'no_slot_'}"
