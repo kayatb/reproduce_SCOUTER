@@ -1,5 +1,7 @@
-""" All calculations related to obtaining the bounding boxes for the images. 
-The bounding boxes are used in the calculation of the precision metric. """
+"""
+All calculations related to obtaining the bounding boxes for the images. 
+The bounding boxes are used in the calculation of the precision metric.
+"""
 
 import argparse
 import numpy as np
@@ -16,7 +18,7 @@ def parse_bounding_box(row):
     del s[0::5]
     s = [int(i) for i in s]
     it = iter(s)
-    # Group each four elements together (i.e. one bounding box)
+    # Group each four elements together (i.e. one set bounding box coordinates)
     return list(zip(it, it, it, it))
 
 

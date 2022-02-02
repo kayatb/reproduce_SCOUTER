@@ -1,36 +1,23 @@
-""" Calculate the average IAUC and DAUC over all images in the dataset. 
-Code partially taken from https://github.com/eclique/RISE. """
+"""
+Calculate the average IAUC and DAUC over all images in the dataset. 
 
+----------------------------------------------------------------------------------------
+
+Code was partially taken and adapted from the following paper:
+
+Petsiuk, V., Das, A., & Saenko, K. (2018). 
+Rise: Randomized input sampling for explanation of black-box models. 
+arXiv preprint arXiv:1806.07421.
+
+Code available at: https://github.com/eclique/RISE
+Commit: d91ea00 on Sep 17, 2018
+"""
 
 import numpy as np
-from PIL import Image
-
 import torch
 import torch.nn as nn
 
 import RISE.evaluation
-import RISE.utils
-
-
-def calc_iauc_and_dauc(model, image, id, img_size):
-    """Calculate the Insertion Area Under Curve and Deletion Area Under Curve
-    for the given image."""
-
-    slot_image = np.array(
-        Image.open(f"sloter/vis/slot_{id}.png").resize((img_size, img_size), resample=Image.BILINEAR),
-        dtype=np.uint8,
-    )
-
-    kern = RISE.evaluation.gkern(11, 5).cuda()
-    blur = lambda x: nn.functional.conv2d(x, kern, padding=11 // 2)
-
-    insertion = RISE.evaluation.CausalMetric(model, "ins", img_size, blur)
-    deletion = RISE.evaluation.CausalMetric(model, "del", img_size, torch.zeros_like)
-
-    ins_score = insertion.single_run(torch.unsqueeze(image, dim=0), slot_image)
-    del_score = deletion.single_run(torch.unsqueeze(image, dim=0), slot_image)
-
-    return RISE.evaluation.auc(ins_score), RISE.evaluation.auc(del_score)
 
 
 def calc_iauc_and_dauc_batch(model, img_dataloader, exp_dataloader, img_size):
@@ -44,16 +31,6 @@ def calc_iauc_and_dauc_batch(model, img_dataloader, exp_dataloader, img_size):
 
     ins_score = []
     del_score = []
-
-    # images = np.empty((len(img_dataloader), batch_size, 3, img_size, img_size))
-    # for i, data in enumerate(img_dataloader):
-    #     images[i] = data["image"][0]
-    # images.reshape((-1, 3, img_size, img_size))
-
-    # exps = np.empty((len(exp_dataloader), batch_size, 3, img_size, img_size))
-    # for i, data in enumerate(exp_dataloader):
-    #     exps[i] = data
-    # exps.reshape((-1, 3, img_size, img_size))
 
     exp_iter = iter(exp_dataloader)
 

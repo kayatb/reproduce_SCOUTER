@@ -1,5 +1,13 @@
-""" Code used for calculating IAUC and DAUC. Code taken from https://github.com/eclique/RISE with minor refactorings
-to suit our needs. """
+""" 
+Code was partially taken and adapted from the following paper:
+
+Petsiuk, V., Das, A., & Saenko, K. (2018). 
+Rise: Randomized input sampling for explanation of black-box models. 
+arXiv preprint arXiv:1806.07421.
+
+Code available at: https://github.com/eclique/RISE
+Commit: d91ea00 on Sep 17, 2018
+"""
 
 import numpy as np
 import torch
@@ -114,7 +122,6 @@ class CausalMetric:
                 coords = salient_order[:, self.step * i : self.step * (i + 1)]
                 row_indices, col_indices = np.unravel_index(coords, (start.shape[2], start.shape[3]))
                 start[0, :, row_indices, col_indices] = finish[0, :, row_indices, col_indices]
-                # start.cpu().numpy().reshape(1, 3, HW)[0, :, coords] = finish.cpu().numpy().reshape(1, 3, HW)[0, :, coords]
 
         return scores
 
@@ -170,9 +177,6 @@ class CausalMetric:
             coords = salient_order[:, self.step * i : self.step * (i + 1)]
             row_indices, col_indices = np.unravel_index(coords, exp_batch.shape[1:])
             start[r, :, row_indices, col_indices] = finish[r, :, row_indices, col_indices]
-            # start.cpu().numpy().reshape(n_samples, 3, HW)[r, :, coords] = (
-            #     finish.cpu().numpy().reshape(n_samples, 3, HW)[r, :, coords]
-            # )
 
         print("AUC: {}".format(auc(scores.mean(1))))
         return scores

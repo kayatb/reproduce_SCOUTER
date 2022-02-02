@@ -1,6 +1,9 @@
-""" Calculate the following confusion matrix metrics:
-Area Under Curve, accuracy, precision, recall, F1-score and Kappa for the given model. 
-In the experiments, these metrics are only reported (and thus implemented) for the ACRIMA dataset. """
+"""
+Calculate the following confusion matrix metrics:
+Area Under Curve, accuracy, precision, recall, F1-score and Kappa for the given model.
+
+In the experiments, these metrics are only reported (and thus implemented) for the ACRIMA dataset.
+"""
 
 import argparse
 import torch
@@ -49,6 +52,8 @@ if __name__ == "__main__":
     for arg_id, arg in enumerate(args_for_evaluation):
         args_dict[arg] = args_type[arg_id](args_dict[arg])
 
+    device = torch.device(args.device)
+
     # Retrieve the data.
     _, val_data = get_data(args.dataset_dir)
     val_dataset = ACRIMA(val_data, transform=make_transform(args, "val"))
@@ -66,15 +71,12 @@ if __name__ == "__main__":
         + f"{'for_area_size_'+str(args.lambda_value) + '_'+ str(args.slots_per_class) + '_' if args.cal_area_size else ''}"
         + "checkpoint.pth"
     )
-
-    device = torch.device(args.device)
-
     model = SlotModel(args)
-    # Map model to be loaded to specified single gpu.
     checkpoint = torch.load(f"{args.output_dir}/" + model_name, map_location=args.device)
     model.load_state_dict(checkpoint["model"])
     model.to(device)
 
+    # Calculate the metrics.
     for batch in data_loader_val:  # Should be only a single batch.
         imgs = batch["image"].to(device, dtype=torch.float32)
         labels = batch["label"].to(device, dtype=torch.int8)

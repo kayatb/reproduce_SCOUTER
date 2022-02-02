@@ -1,5 +1,19 @@
-""" General function to calculate the average metrics (area size, precision) over the entire validation set. 
-    Code partially taken from scouter/test.py. """
+""" 
+General functions to calculate the average metrics (area size, precision, IAUC, DAUC, infidelity, sensitivity) 
+over the entire validation set. 
+
+------------------------------------------------------------------------------------------------------------------------
+
+Code was partially taken and adapted from the following paper:
+
+Li, L., Wang, B., Verma, M., Nakashima, Y., Kawasaki, R., & Nagahara, H. (2021). 
+SCOUTER: Slot attention-based classifier for explainable image recognition. 
+In Proceedings of the IEEE/CVF International Conference on Computer Vision (pp. 1046-1055).
+
+Code available at: https://github.com/wbw520/scouter
+Commit: 5885b82 on Sep 7, 2021
+
+"""
 
 from __future__ import print_function
 import argparse
@@ -101,10 +115,10 @@ def prepare_data_point(data, transform, device):
 
 
 def generate_explanations(model, data_loader_val, device, save_path=None):
-    """Generate and saves the explanations of the model for the images in the validation set.
+    """Generate and save the explanations of the model for the images in the validation set.
     Only the ground truth explanation and the least similar class are generated/saved."""
-    with open("lcs_label_id.json") as json_file:
-        lcs_dict = json.load(json_file)
+    with open("lsc_label_id.json") as json_file:
+        lsc_dict = json.load(json_file)
 
     if not save_path:
         os.makedirs("exps/positive", exist_ok=True)
@@ -113,7 +127,8 @@ def generate_explanations(model, data_loader_val, device, save_path=None):
 
     for data in data_loader_val:
         image, label, fname = prepare_data_point(data, transform, device)
-        _ = model(torch.unsqueeze(image, dim=0), save_id=(label, lcs_dict[str(label)], save_path, fname))
+        # Explanation image is generated during forward pass of image in the model.
+        _ = model(torch.unsqueeze(image, dim=0), save_id=(label, lsc_dict[str(label)], save_path, fname))
 
 
 def eval(data_loader_val, transform, device, loss_status, img_size, exp_dir="exps"):
@@ -128,7 +143,7 @@ def eval(data_loader_val, transform, device, loss_status, img_size, exp_dir="exp
     num_points = 0
     # Process each image.
     for data in data_loader_val:
-        image, label, fname = prepare_data_point(data, transform, device)
+        _, _, fname = prepare_data_point(data, transform, device)
 
         # Determine for which image/explanation to evaluate.
         if loss_status > 0:  # Positive explanations
@@ -163,29 +178,32 @@ if __name__ == "__main__":
     else:
         exp_path = "exps/negative"
 
-    with open("lcs_label_id.json") as json_file:
-        lcs_dict = json.load(json_file)
+    with open("lsc_label_id.json") as json_file:
+        lsc_dict = json.load(json_file)
 
-    infid, sens = calc_infid_and_sens(model, data_loader_val, exp_path, loss_status, lcs_dict)
+    # Calculate infidelity and sensitivity metrics.
+    infid, sens = calc_infid_and_sens(model, data_loader_val, exp_path, loss_status, lsc_dict)
     print("INFIDELITY:", infid)
     print("SENSITIVITY:", sens)
-    # eval(data_loader_val, transform, device, loss_status, img_size)
 
-    # batch_size = 70
-    # model, data_loader_val, transform, device, loss_status, img_size = prepare(batch_size)
-    # if loss_status > 0:
-    #     exp_files = utils.exp_data.get_exp_filenames("exps/positive")
-    # else:
-    #     exp_files = utils.exp_data.get_exp_filenames("exps/negative")
+    # Calculate area size and precision metrics.
+    eval(data_loader_val, transform, device, loss_status, img_size)
 
-    # exp_dataloader = torch.utils.data.DataLoader(
-    #     utils.exp_data.ExpData(exp_files, img_size, resize=True),
-    #     batch_size,
-    #     shuffle=False,
-    #     num_workers=1,
-    #     pin_memory=True,
-    # )
+    # Prepare data with a bigger batch size.
+    batch_size = 70
+    model, data_loader_val, transform, device, loss_status, img_size = prepare(batch_size)
 
-    # iauc, dauc = calc_iauc_and_dauc_batch(model, data_loader_val, exp_dataloader, img_size)
-    # print(f"IAUC: {iauc}")
-    # print(f"DAUC: {dauc}")
+    # Load all explanation images.
+    exp_files = utils.exp_data.get_exp_filenames(exp_path)
+    exp_dataloader = torch.utils.data.DataLoader(
+        utils.exp_data.ExpData(exp_files, img_size, resize=True),
+        batch_size,
+        shuffle=False,
+        num_workers=1,
+        pin_memory=True,
+    )
+
+    # Calculate IAUC and DAUC metrics.
+    iauc, dauc = calc_iauc_and_dauc_batch(model, data_loader_val, exp_dataloader, img_size)
+    print(f"IAUC: {iauc}")
+    print(f"DAUC: {dauc}")

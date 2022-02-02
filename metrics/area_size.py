@@ -1,4 +1,18 @@
-""" Code from scouter/test.py altered to calculate the average attention ratio/area size for an image. """
+"""
+Calculate the area size of the explanation in a given image.
+
+----------------------------------------------------------------------------------------
+
+Code was partially taken and adapted from the following paper:
+
+Li, L., Wang, B., Verma, M., Nakashima, Y., Kawasaki, R., & Nagahara, H. (2021). 
+SCOUTER: Slot attention-based classifier for explainable image recognition. 
+In Proceedings of the IEEE/CVF International Conference on Computer Vision (pp. 1046-1055).
+
+Code available at: https://github.com/wbw520/scouter
+Commit: 5885b82 on Sep 7, 2021
+"""
+
 import numpy as np
 
 

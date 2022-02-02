@@ -110,9 +110,6 @@ class SlotAttention(nn.Module):
                     if id == sens:
                         image.save("noisy.png")
 
-            # print(self.loss_status*torch.sum(attn.clone(), dim=2, keepdim=False))
-            # print(self.loss_status*torch.sum(updates.clone(), dim=2, keepdim=False))
-
         if self.slots_per_class > 1:
             new_updates = torch.zeros((updates.size(0), self.num_classes, updates.size(-1)))
             for slot_class in range(self.num_classes):

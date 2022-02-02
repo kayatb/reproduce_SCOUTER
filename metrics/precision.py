@@ -1,11 +1,14 @@
-""" Calculate the precision metric. """
+"""
+Calculate the precision metric, which is defined as the overlap of the pixels of the 
+explanation contained in the bounding box and all pixels of the explanation.
+"""
 
 from PIL import Image
 import numpy as np
 
 
 def calc_precision(exp_image, img_size, fname, bboxes):
-    """Calculate the precision for the explanation of the given image."""
+    """Calculate the precision for the explanation image."""
     # Resize the attention map to be the same size as the image via bilinear interpolation.
     slot_image = np.array(
         exp_image.resize((img_size, img_size), resample=Image.BILINEAR),

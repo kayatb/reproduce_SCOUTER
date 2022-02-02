@@ -1,6 +1,8 @@
-""" The validation set images in the ImageNet dataset are provided in a single folder, but for the SCOUTER code they
+"""
+The validation set images in the ImageNet dataset are provided in a single folder, but for the SCOUTER code they
 need to be ordered in separate folders with the label name. We are provided with a CSV-file that maps the filenames to
-their corresponding labels. """
+their corresponding labels.
+"""
 
 import argparse
 import os

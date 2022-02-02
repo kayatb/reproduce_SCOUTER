@@ -1,4 +1,4 @@
-""" Get the explanation image as a dataloader object. """
+""" Get the explanation images as a dataset object. """
 import os
 import numpy as np
 from PIL import Image
@@ -6,6 +6,7 @@ from torch.utils.data import Dataset
 
 
 def get_exp_filenames(path):
+    """Return a list of all explanation image filenames."""
     filenames = []
 
     for file in os.listdir(path):
@@ -17,6 +18,8 @@ def get_exp_filenames(path):
 
 
 class ExpData(Dataset):
+    """Contains the explanation images."""
+
     def __init__(self, filenames, img_size, resize=False):
         self.filenames = filenames
         self.resize = resize

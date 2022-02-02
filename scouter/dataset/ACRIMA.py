@@ -1,4 +1,6 @@
-""" Functions related to dealing with the ACRIMA dataset. """
+"""
+Functions related to dealing with the ACRIMA dataset.
+"""
 
 import os
 from sklearn.model_selection import train_test_split

@@ -1,10 +1,19 @@
-""" Code taken from https://github.com/eclique/RISE """
+""" 
+Code was partially taken and adapted from the following paper:
+
+Petsiuk, V., Das, A., & Saenko, K. (2018). 
+Rise: Randomized input sampling for explanation of black-box models. 
+arXiv preprint arXiv:1806.07421.
+
+Code available at: https://github.com/eclique/RISE
+Commit: d91ea00 on Sep 17, 2018
+"""
 
 import numpy as np
 from matplotlib import pyplot as plt
 import torch
 from torch.utils.data.sampler import Sampler
-from torchvision import transforms, datasets
+from torchvision import transforms
 from PIL import Image
 
 
