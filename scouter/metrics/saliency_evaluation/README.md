@@ -1,5 +1,5 @@
 # Reference
-All files in this folder was taken and adapted from the following paper:
+All files in this folder have been taken and adapted from the following paper:
 
 > Yeh, C. K., Hsieh, C. Y., Suggala, A., Inouye, D. I., & Ravikumar, P. K. (2019). On the (in) fidelity and sensitivity of explanations. Advances in Neural Information Processing Systems, 32, 10967-10978.
 

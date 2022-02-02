@@ -1,5 +1,5 @@
 # Reference
-All files in this folder are taken and adapted from the following paper:
+All files in this folder have been taken and adapted from the following paper:
 
 >Li, L., Wang, B., Verma, M., Nakashima, Y., Kawasaki, R., & Nagahara, H. (2021). SCOUTER: Slot attention-based classifier for explainable image recognition. In Proceedings of the IEEE/CVF International Conference on Computer Vision (pp. 1046-1055).
 
