@@ -17,17 +17,17 @@ import numpy as np
 import torch
 import torch.nn as nn
 
-import RISE.evaluation
+import metrics.RISE.evaluation as evaluation
 
 
-def calc_iauc_and_dauc_batch(model, img_dataloader, exp_dataloader, img_size):
+def calc_iauc_and_dauc_batch(model, img_dataloader, exp_dataloader, img_size, device):
     """Calculate the IAUC and DAUC over batches in the dataloader."""
     model.eval()
-    kern = RISE.evaluation.gkern(11, 5).cuda()
-    blur = lambda x: nn.functional.conv2d(x.cuda(), kern, padding=11 // 2)
+    kern = evaluation.gkern(11, 5).to(device)
+    blur = lambda x: nn.functional.conv2d(x.to(device), kern, padding=11 // 2)
 
-    insertion = RISE.evaluation.CausalMetric(model, "ins", img_size, blur)
-    deletion = RISE.evaluation.CausalMetric(model, "del", img_size, torch.zeros_like)
+    insertion = evaluation.CausalMetric(model, "ins", img_size, blur)
+    deletion = evaluation.CausalMetric(model, "del", img_size, torch.zeros_like)
 
     ins_score = []
     del_score = []
@@ -40,9 +40,9 @@ def calc_iauc_and_dauc_batch(model, img_dataloader, exp_dataloader, img_size):
             exps = next(exp_iter)
 
             ins = insertion.evaluate(imgs, exps, len(imgs))
-            ins_score.append(RISE.evaluation.auc(ins.mean(1)))
+            ins_score.append(evaluation.auc(ins.mean(1)))
 
             dels = deletion.evaluate(imgs, exps, len(imgs))
-            del_score.append(RISE.evaluation.auc(dels.mean(1)))
+            del_score.append(evaluation.auc(dels.mean(1)))
 
     return np.mean(ins_score), np.mean(del_score)

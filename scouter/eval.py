@@ -16,25 +16,25 @@ Commit: 5885b82 on Sep 7, 2021
 """
 
 from __future__ import print_function
+
 import argparse
-import torch
-from torchvision import transforms
-from PIL import Image
-import numpy as np
+import json
 import os
 import os.path
-import json
 
-from scouter.sloter.slot_model import SlotModel
-from scouter.train import get_args_parser
-from scouter.dataset.ConText import ConText, MakeListImage
+import numpy as np
+import torch
+from PIL import Image
+from dataset.ConText import ConText, MakeListImage
+from sloter.slot_model import SlotModel
+from train import get_args_parser
+from torchvision import transforms
 
-from area_size import calc_area_size
-from precision import calc_precision
-from IAUC_DAUC import calc_iauc_and_dauc_batch
-from saliency_evaluation.eval_infid_sen import calc_infid_and_sens
-
-import utils.exp_data
+from metrics.utils import exp_data
+from metrics.area_size import calc_area_size
+from metrics.IAUC_DAUC import calc_iauc_and_dauc_batch
+from metrics.precision import calc_precision
+from metrics.saliency_evaluation.eval_infid_sen import calc_infid_and_sens
 
 
 def prepare(batch_size):
@@ -47,6 +47,15 @@ def prepare(batch_size):
         type=str,
         help="Location of the CSV file that contains the bounding boxes",
     )
+
+    parser.add_argument(
+        "--area_prec", action="store_true", help="Whether to calculate the area size and precision metrics"
+    )
+    parser.add_argument("--auc", action="store_true", help="Whether to calculate the IAUC and DAUC metrics")
+    parser.add_argument(
+        "--saliency", action="store_true", help="Whether to calculate the infidelity and sensitivity metrics"
+    )
+
     args = parser.parse_args()
 
     args_dict = vars(args)
@@ -91,7 +100,7 @@ def prepare(batch_size):
     model.to(args.device)
     model.eval()
 
-    return model, data_loader_val, transform, device, args.loss_status, args.img_size
+    return model, data_loader_val, transform, device, args
 
 
 def prepare_data_point(data, transform, device):
@@ -168,42 +177,49 @@ def eval(data_loader_val, transform, device, loss_status, img_size, exp_dir="exp
 
 if __name__ == "__main__":
     # Use batch size = 1 to handle a single image at a time.
-    model, data_loader_val, transform, device, loss_status, img_size = prepare(1)
+    model, data_loader_val, transform, device, args = prepare(1)
 
     # Generate all explanation images.
     generate_explanations(model, data_loader_val, device)
 
-    if loss_status > 0:
+    if args.loss_status > 0:
         exp_path = "exps/positive"
     else:
         exp_path = "exps/negative"
 
-    with open("lsc_label_id.json") as json_file:
-        lsc_dict = json.load(json_file)
+    # Calculate area size and precision metrics.
+    if args.area_prec:
+        print("Calculating the area size and precision...")
+        eval(data_loader_val, transform, device, args.loss_status, args.img_size)
 
     # Calculate infidelity and sensitivity metrics.
-    infid, sens = calc_infid_and_sens(model, data_loader_val, exp_path, loss_status, lsc_dict)
-    print("INFIDELITY:", infid)
-    print("SENSITIVITY:", sens)
+    if args.saliency:
+        print("Calculating the infidelity and sensitivity...")
 
-    # Calculate area size and precision metrics.
-    eval(data_loader_val, transform, device, loss_status, img_size)
+        with open("lsc_label_id.json") as json_file:
+            lsc_dict = json.load(json_file)
 
-    # Prepare data with a bigger batch size.
-    batch_size = 70
-    model, data_loader_val, transform, device, loss_status, img_size = prepare(batch_size)
-
-    # Load all explanation images.
-    exp_files = utils.exp_data.get_exp_filenames(exp_path)
-    exp_dataloader = torch.utils.data.DataLoader(
-        utils.exp_data.ExpData(exp_files, img_size, resize=True),
-        batch_size,
-        shuffle=False,
-        num_workers=1,
-        pin_memory=True,
-    )
+        infid, sens = calc_infid_and_sens(model, data_loader_val, exp_path, args.loss_status, lsc_dict)
+        print("Average infidelity is:", infid)
+        print("Average sensitivity:", sens)
 
     # Calculate IAUC and DAUC metrics.
-    iauc, dauc = calc_iauc_and_dauc_batch(model, data_loader_val, exp_dataloader, img_size)
-    print(f"IAUC: {iauc}")
-    print(f"DAUC: {dauc}")
+    if args.auc:
+        print("Calculating the IAUC and DAUC...")
+        # Prepare data with a bigger batch size.
+        batch_size = args.batch_size
+        model, data_loader_val, transform, device, args = prepare(batch_size)
+
+        # Load all explanation images.
+        exp_files = exp_data.get_exp_filenames(exp_path)
+        exp_dataloader = torch.utils.data.DataLoader(
+            exp_data.ExpData(exp_files, args.img_size, resize=True),
+            batch_size,
+            shuffle=False,
+            num_workers=1,
+            pin_memory=True,
+        )
+
+        iauc, dauc = calc_iauc_and_dauc_batch(model, data_loader_val, exp_dataloader, args.img_size, args.device)
+        print(f"Average IAUC is: {iauc}")
+        print(f"Average DAUC is: {dauc}")

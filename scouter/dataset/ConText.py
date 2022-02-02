@@ -12,13 +12,14 @@ class MakeList(object):
     this class used to make list of data for model train and test, return the root name of each image
     root: txt file records condition for every cxr image
     """
+
     def __init__(self, args, ratio=0.8):
         self.image_root = args.dataset_dir
         self.all_image = get_name(self.image_root, mode_folder=False)
-        self.category = sorted(set([i[:i.find('_')] for i in self.all_image]))
+        self.category = sorted(set([i[: i.find("_")] for i in self.all_image]))
 
         for c_id, c in enumerate(self.category):
-            print(c_id, '\t', c)
+            print(c_id, "\t", c)
 
         self.ration = ratio
 
@@ -31,19 +32,20 @@ class MakeList(object):
         return train, val
 
     def deal_label(self, img_name):
-        categoty_no = img_name[:img_name.find('_')]
+        categoty_no = img_name[: img_name.find("_")]
         back = self.category.index(categoty_no)
         return back
 
 
-class MakeListImage():
+class MakeListImage:
     """
     this class used to make list of data for ImageNet
     """
+
     def __init__(self, args):
         self.image_root = args.dataset_dir
         self.category = get_name(self.image_root + "train/")
-        self.used_cat = self.category[:args.num_classes]
+        self.used_cat = self.category[: args.num_classes]
         # for c_id, c in enumerate(self.used_cat):
         #     print(c_id, '\t', c)
 
@@ -68,6 +70,7 @@ class MakeListImage():
 
 class ConText(Dataset):
     """read all image name and label"""
+
     def __init__(self, data, transform=None):
         self.all_item = data
         self.transform = transform
@@ -79,9 +82,9 @@ class ConText(Dataset):
         while not os.path.exists(self.all_item[item_id][0]):
             raise ("not exist image:" + self.all_item[item_id][0])
         image_path = self.all_item[item_id][0]
-        image = Image.open(image_path).convert('RGB')
-        if image.mode == 'L':
-            image = image.convert('RGB')
+        image = Image.open(image_path).convert("RGB")
+        if image.mode == "L":
+            image = image.convert("RGB")
         if self.transform:
             image = self.transform(image)
         label = self.all_item[item_id][1]

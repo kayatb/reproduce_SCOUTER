@@ -16,7 +16,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from scipy.ndimage.filters import gaussian_filter
 
-from utils import get_class_name, tensor_imshow
+from metrics.RISE.utils import get_class_name, tensor_imshow
 
 HW = 260 * 260  # image area
 n_classes = 100

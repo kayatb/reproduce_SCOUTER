@@ -9,10 +9,11 @@ import argparse
 import torch
 from sklearn.metrics import confusion_matrix, roc_auc_score, cohen_kappa_score
 
-from scouter.train import get_args_parser
-from scouter.dataset.ACRIMA import get_data, ACRIMA
-from scouter.dataset.transform_func import make_transform
-from scouter.sloter.slot_model import SlotModel
+
+from train import get_args_parser
+from dataset.ACRIMA import get_data, ACRIMA
+from dataset.transform_func import make_transform
+from sloter.slot_model import SlotModel
 
 
 def calc_metrics(model, imgs, labels):

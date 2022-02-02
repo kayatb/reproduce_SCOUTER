@@ -12,8 +12,8 @@ Commit: 44a66e2 on Oct 5, 2020
 import numpy as np
 import torch
 
-from infid_sen_utils import evaluate_infid_sen
-import config
+from metrics.saliency_evaluation.infid_sen_utils import evaluate_infid_sen
+import metrics.saliency_evaluation.config as config
 
 
 class Args:
