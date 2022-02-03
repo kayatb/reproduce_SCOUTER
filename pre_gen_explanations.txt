@@ -1,0 +1,59 @@
+=====Area Size and Precision=====
+lambda 1 plus
+Average area size is: 0.15653315904139442
+Average precision is: 0.7898424683721538
+lambda 3 plus
+Average area size is: 0.15449967562333547
+Average precision is: 0.7948647717802498
+lambda 10 plus
+Average area size is: 0.14475559428709753
+Average precision is: 0.786953173388253
+lambda 1 min
+Average area size is: 0.09455079157588975
+Average precision is: 0.8481252545623882
+lambda 3 min
+Average area size is: 0.08042374243524575
+Average precision is: 0.6685589215735412
+lambda 10 min
+Average area size is: 0.03635053982086675
+Average precision is: 0.8967911701617861
+
+=====IAUC and DAUC=====
+lambda 1 plus
+IAUC: 0.33765285396887035
+DAUC: 0.4013218392806293
+lambda 3 plus
+IAUC: 0.35642412812339813
+DAUC: 0.46415951221032725
+lambda 10 plus
+IAUC: 0.346604563664309
+DAUC: 0.42036305700198423
+lambda 1 min
+IAUC: 0.24460456896660832
+DAUC: 0.484542247821955
+lambda 3 min
+IAUC: 0.34882016718630293
+DAUC: 0.3555615133752389
+lambda 10 min
+IAUC: 0.21489682015529257
+DAUC: 0.47839275748871884
+
+=====Infidelity and Sensitivity=====
+lambda 1 plus
+INFIDELITY: {'Gaussian': 0.0006622940002741814}
+SENSITIVITY: {'Gaussian': 1.91674510661663}
+lambda 3 plus
+INFIDELITY: {'Gaussian': 0.0001203571381711239}
+SENSITIVITY: {'Gaussian': 1.5672395740611653}
+lambda 10 plus
+INFIDELITY: {'Gaussian': 0.06010122366900753}
+SENSITIVITY: {'Gaussian': 2.2629962110202095}
+lambda 1 min
+INFIDELITY: {'Gaussian': 0.0012719098474137745}
+SENSITIVITY: {'Gaussian': 2.2735042749368097}
+lambda 3 min
+INFIDELITY: {'Gaussian': 0.09614195190728614}
+SENSITIVITY: {'Gaussian': 2.9514070246346433}
+lambda 10 min
+INFIDELITY: {'Gaussian': 0.0028908377730829616}
+SENSITIVITY: {'Gaussian': 3.052460936489741}
