@@ -4,7 +4,7 @@ All code used for our (accepted) submission to the [ML Reproducibility Challenge
 
 [SCOUTER PDF](https://arxiv.org/abs/2009.06138) & [SCOUTER Code](https://github.com/wbw520/scouter)
 
-Our paper is available at: https://openreview.net/forum?id=HZNlq3fmhRF
+Our paper can be found [here](https://doi.org/10.5281/zenodo.6574641%7D)
 
 ## Downloading trained models
 A single trained model for each experimental setup can be downloaded from [here](https://drive.google.com/file/d/1A5NdU9Be7PQUzWz30ujki-79Tw0BjrMx/view).
@@ -14,12 +14,21 @@ Examples of how to run the experiments can be found in `produce_results.ipynb`.
 
 ## Cite
 ```
-@inproceedings{
-burger2022reproducibility,
-title={Reproducibility Study - {SCOUTER}: Slot Attention-based Classifier for Explainable Image Recognition},
-author={Maarten Burger and Kaya ter Burg and Sam Titarsolej and Selina Jasmin Khan},
-booktitle={ML Reproducibility Challenge 2021 (Fall Edition)},
-year={2022},
-url={https://openreview.net/forum?id=HZNlq3fmhRF}
+@article{maarten_burger_2022_6574641,
+  author       = {Maarten Burger and
+                  Kaya ter Burg and
+                  Sam Titarsolej and
+                  Selina Jasmin Khan},
+  title        = {{[Re] Reproducibility Study - SCOUTER: Slot 
+                   Attention-based Classifier for Explainable Image
+                   Recognition}},
+  journal      = {ReScience C},
+  year         = 2022,
+  volume       = 8,
+  number       = 2,
+  pages        = {#8},
+  month        = may,
+  doi          = {10.5281/zenodo.6574641},
+  url          = {https://doi.org/10.5281/zenodo.6574641%7D
 }
 ```
