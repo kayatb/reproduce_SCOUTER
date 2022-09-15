@@ -4,7 +4,7 @@ All code used for our (accepted) submission to the [ML Reproducibility Challenge
 
 [SCOUTER PDF](https://arxiv.org/abs/2009.06138) & [SCOUTER Code](https://github.com/wbw520/scouter)
 
-Our paper can be found [here](https://doi.org/10.5281/zenodo.6574641%7D)
+Our paper can be found [here](https://doi.org/10.5281/zenodo.6574641)
 
 ## Downloading trained models
 A single trained model for each experimental setup can be downloaded from [here](https://drive.google.com/file/d/1A5NdU9Be7PQUzWz30ujki-79Tw0BjrMx/view).
@@ -29,6 +29,6 @@ Examples of how to run the experiments can be found in `produce_results.ipynb`.
   pages        = {#8},
   month        = may,
   doi          = {10.5281/zenodo.6574641},
-  url          = {https://doi.org/10.5281/zenodo.6574641%7D
+  url          = {https://doi.org/10.5281/zenodo.6574641
 }
 ```
