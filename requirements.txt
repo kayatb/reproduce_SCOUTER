@@ -15,7 +15,7 @@ imgaug==0.4.0
 ipykernel==6.8.0
 ipython==8.0.1
 jedi==0.18.1
-joblib==0.16.0
+joblib==1.2.0
 jupyter-client==7.1.2
 jupyter-core==4.9.1
 kiwisolver==1.2.0
